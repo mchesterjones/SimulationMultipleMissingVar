@@ -12,7 +12,7 @@ library(broom)
 library(pROC)
 library(xgboost)
 library(MASS) # for bivariate normal distribution 
-
+library(mice) # for ampute
 
 
 ###############################################################################
@@ -35,6 +35,7 @@ simulation_nrun_fnc <- function(n_iter,
                                 submodel,
                                 refmodel,
                                 xgboost_model,
+                                rimodel,
                                 model) {
   
   all_iterations <- list()
@@ -58,6 +59,7 @@ simulation_nrun_fnc <- function(n_iter,
       submodel = submodel,
       refmodel = refmodel,
       xgboost_model = xgboost_model,
+      rimodel=rimodel,
       model = model
     )
     
@@ -88,6 +90,7 @@ simulation_singlerun_fnc <- function(Y_prev,
                                      gamma_U,
                                      submodel,
                                      refmodel,
+                                     rimodel,
                                      xgboost_model,
                                      model) {
   
@@ -153,6 +156,7 @@ expit_function <- function(x) {1/(1+exp(-x))} ## Recal ex/1+ex this is the same 
 
 simulation_function <- function(N_val,
                                 Y_prev, ## Prevalence of Y
+                                R_prev,
                                 gamma_0,  ## Intercept in Y model
                                 gamma_x1,  ## Coefficient of X1 on outcome Y
                                 gamma_x2,  ## Coefficient of X2 on outcome Y
@@ -232,7 +236,6 @@ simulation_function <- function(N_val,
                                        !is.na(x_1) & is.na(x_3) ~ 3))
   
   ## Print output
-  print(sims_parameters$label[i])
   print("Y Prev")
   print(table(val_data$Y))
   print(prop.table(table(val_data$Y)) * 100)
@@ -334,10 +337,13 @@ prediction_function <- function(val_data, submodel, refmodel, xgboost_model, mod
   #------------------------------------------------------
   
   data_ri <- val_data %>% 
-    mutate(x_1_ri = case_when(is.na(x_1) ~ predict(rimodel[["x1_ri_model"]], newdata=val_data, type="response"), 
+    mutate(x_1_ri = case_when(is.na(x_1) & !is.na(x_3) ~ predict(rimodel[["x1_ri_model"]], newdata=val_data, type="response"), 
+                              is.na(x_1) & is.na(x_3) ~ predict(rimodel[["x1x3_ri_model"]], newdata=val_data, type="response"),
                               !is.na(x_1) ~ x_1),
-           x_3_ri = case_when(is.na(x_3) ~ predict(rimodel[["x3_ri_model"]], newdata=val_data, type="response"), 
-                              !is.na(x_3) ~ x_3),)
+           x_3_ri = case_when(
+             is.na(x_3) & !is.na(x_1) ~ predict(rimodel[["x3_ri_model"]], newdata=val_data, type="response"), 
+             is.na(x_3) & is.na(x_1) ~ predict(rimodel[["x3x1_ri_model"]], newdata=val_data, type="response"),
+             !is.na(x_3) ~ x_3))
   
   ## Make predictions
   predictions_ri = predict(rimodel[["model_ri"]], newdata=data_ri, type="response")
@@ -366,8 +372,6 @@ prediction_function <- function(val_data, submodel, refmodel, xgboost_model, mod
 # ## 7. Function to calculate the predictive performance of the models
 # ####---------------------------------------------------------------
 predictive.performance.function <- function(predictions) {
-  library(pROC)  # Ensure pROC is loaded
-  
   # Extract Y (true labels)
   Y <- predictions$Y
   

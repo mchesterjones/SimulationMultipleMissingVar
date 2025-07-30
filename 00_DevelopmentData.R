@@ -84,12 +84,14 @@ dev_data_simulation_function <- function(
                       1, 1, 0, 1, 1, 1), 
                     nrow = 4, byrow = TRUE)
   
-  ## MANUAL SWITCH
-  #---------------------------
-  ## MCAR
-  # data_miss <- ampute(dev_data_IPD, patterns = pattern, mech = "MCAR")
-  # head(data_miss$amp)
-  # md.pattern(data_miss$amp)
+  # MANUAL SWITCH
+  ##---------------------------
+  # MCAR
+  data_miss <- ampute(dev_data_IPD, patterns = pattern, mech = "MCAR")
+  head(data_miss$amp)
+  md.pattern(data_miss$amp)
+  
+  
   # 
   #
   # ## MAR
@@ -104,23 +106,23 @@ dev_data_simulation_function <- function(
   # md.pattern(data_miss$amp)
   # 
   # 
-  ## MNAR 
-  mnar_weights <- matrix(0, nrow = 4, ncol = 6)
-  mnar_weights[2, 1] <- 0.5  #  V1 → V1
-  mnar_weights[2, 2] <- 0.5  #  V2 → V1
-  mnar_weights[2, 6] <- 0.5  #  V6 (U) → V1
-
-  mnar_weights[3, 1] <- 0.5  #  V1 → V1 & V3
-  mnar_weights[3, 2] <- 0.5  #  V2 → V1 & V3
-  mnar_weights[3, 6] <- 0.5  #  V6 → V1 & V3
-
-  mnar_weights[4, 1] <- 0.5  #  V1 → V3
-  mnar_weights[4, 2] <- 0.5  #  V2 → V3
-  mnar_weights[4, 6] <- 0.5  #  V6 → V3
-
-  data_miss <- ampute(dev_data_IPD, patterns = pattern, mech="MNAR", weights=mnar_weights)
-  head(data_miss$amp)
-  md.pattern(data_miss$amp)
+  # ## MNAR 
+  # mnar_weights <- matrix(0, nrow = 4, ncol = 6)
+  # mnar_weights[2, 1] <- 0.5  #  V1 → V1
+  # mnar_weights[2, 2] <- 0.5  #  V2 → V1
+  # mnar_weights[2, 6] <- 0.5  #  V6 (U) → V1
+  # 
+  # mnar_weights[3, 1] <- 0.5  #  V1 → V1 & V3
+  # mnar_weights[3, 2] <- 0.5  #  V2 → V1 & V3
+  # mnar_weights[3, 6] <- 0.5  #  V6 → V1 & V3
+  # 
+  # mnar_weights[4, 1] <- 0.5  #  V1 → V3
+  # mnar_weights[4, 2] <- 0.5  #  V2 → V3
+  # mnar_weights[4, 6] <- 0.5  #  V6 → V3
+  # 
+  # data_miss <- ampute(dev_data_IPD, patterns = pattern, mech="MNAR", weights=mnar_weights)
+  # head(data_miss$amp)
+  # md.pattern(data_miss$amp)
   # 
   
   
@@ -295,14 +297,18 @@ ri_function  <- function(dev_data) {
   
   ## Create model to predict x_1
   x1_ri_model  <- lm(x_1  ~ x_2 + x_3 + x_4 + x_5, data = dev_data)
+  x1x3_ri_model  <- lm(x_1  ~ x_2 + x_4 + x_5, data = dev_data)
   x3_ri_model  <- lm(x_3  ~ x_1 + x_2 + x_4 + x_5, data = dev_data)
+  x3x1_ri_model  <- lm(x_3  ~ x_2 + x_4 + x_5, data = dev_data) # No x_1
   
   ## Impute the missing values of x_1
   dev_data <- dev_data %>% 
-    mutate(x_1_ri = case_when(is.na(x_1) ~ predict(x1_ri_model, newdata=dev_data, type="response"), 
+    mutate(x_1_ri = case_when(is.na(x_1) & !is.na(x_3) ~ predict(x1_ri_model, newdata=dev_data, type="response"), 
+                              is.na(x_1) & is.na(x_3) ~ predict(x1x3_ri_model, newdata=dev_data, type="response"),
                               !is.na(x_1) ~ x_1),
            x_3_ri = case_when(
-                              is.na(x_3) ~ predict(x3_ri_model, newdata=dev_data, type ="response"), 
+                              is.na(x_3) & !is.na(x_1) ~ predict(x3_ri_model, newdata=dev_data, type ="response"), 
+                              is.na(x_3) & is.na(x_1) ~ predict(x3x1_ri_model, newdata=dev_data, type="response"),
                               !is.na(x_3) ~ x_3))
   
   ## Build Model  
@@ -312,7 +318,9 @@ ri_function  <- function(dev_data) {
   
   
   return(list(x1_ri_model=x1_ri_model,
+              x1x3_ri_model = x1x3_ri_model,
               x3_ri_model=x3_ri_model,
+              x3x1_ri_model = x3x1_ri_model,
               model_ri=model_ri))
 }
 
@@ -363,8 +371,8 @@ for (i in 1:nrow(sims_parameters)) {
   #4. Save
   setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Development Datasets") 
   # Construct the filename with today's date
-#  filename <- paste0("DevData_MCAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
+  filename <- paste0("DevData_MCAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
 #  filename <- paste0("DevData_MAR", "_Yprev_", sims_parameters$Y_prev[i],  ".Rdata")
- filename <- paste0("DevData_MNAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
+# filename <- paste0("DevData_MNAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
   save(development_dataset, file = filename)
 }
