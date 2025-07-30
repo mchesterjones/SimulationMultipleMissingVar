@@ -25,6 +25,7 @@ library(MASS) # for bivariate normal distribution
 simulation_nrun_fnc <- function(n_iter,
                                 N_val,
                                 Y_prev,
+                                R_prev,
                                 gamma_x1,
                                 gamma_x2,
                                 gamma_x3,
@@ -47,6 +48,7 @@ simulation_nrun_fnc <- function(n_iter,
     iter_current <- simulation_singlerun_fnc(
       N_val = N_val,
       Y_prev = Y_prev,
+      R_prev = R_prev,
       gamma_x1 = gamma_x1,
       gamma_x2 = gamma_x2,
       gamma_x3 = gamma_x3,
@@ -77,6 +79,7 @@ simulation_nrun_fnc <- function(n_iter,
 
 simulation_singlerun_fnc <- function(Y_prev,
                                      N_val,
+                                     R_prev,
                                      gamma_x1,
                                      gamma_x2,
                                      gamma_x3,
@@ -91,6 +94,7 @@ simulation_singlerun_fnc <- function(Y_prev,
   
   parameters <- list(N_val = N_val,
                      Y_prev = Y_prev,
+                     R_prev= R_prev,
                      gamma_x1 = gamma_x1,
                      gamma_x2 = gamma_x2,
                      gamma_x3 = gamma_x3,
@@ -102,6 +106,7 @@ simulation_singlerun_fnc <- function(Y_prev,
   #1.val_imp_data function-------------
   val_data <- simulation_function(N_val = N_val,
                                   Y_prev = Y_prev,
+                                  R_prev = R_prev,
                                   gamma_x1 = gamma_x1,
                                   gamma_x2 = gamma_x2,
                                   gamma_x3 = gamma_x3,
@@ -176,7 +181,7 @@ simulation_function <- function(N_val,
     mutate(x_5 = rbinom(n = N_val, size = 1, prob = plogis(x_5)))
   
   #2. Remove X1 and X3 
-  myfreq <- c(0.25, 0, 0, 0,0,0)
+  myfreq <- c(R_prev, 0, 0, 0,0,0)
   pattern <- matrix(c(1, 1, 1, 1, 1, 1,
                       0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
