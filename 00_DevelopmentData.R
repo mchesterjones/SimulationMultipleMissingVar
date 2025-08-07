@@ -20,7 +20,9 @@ library(mice)
 ## Functions for running iterations
 ################################################################################
 
-set.seed(132) # Note New Seed
+#set.seed(13245) # Note New Seed for MCAR
+#set.seed(1234) # Note New Seed for MAR
+set.seed(132) # Note New Seed per MNAR
 
 sims_parameters <- crossing(
   N_dev = 100000,
@@ -77,53 +79,62 @@ dev_data_simulation_function <- function(
     mutate(x_5 = rbinom(n = N_dev, size = 1, prob = plogis(x_5)))
 
   #2. Remove X1 and X3 
-  myfreq <- c(0.25, 0, 0, 0,0,0)
-  pattern <- matrix(c(1, 1, 1, 1, 1, 1,
-                      0, 1, 1, 1, 1, 1, 
+  pattern <- matrix(c(0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
-                    nrow = 4, byrow = TRUE)
+                    nrow = 3, byrow = TRUE)
   
   # MANUAL SWITCH
   ##---------------------------
   # MCAR
-  # data_miss <- ampute(dev_data_IPD, patterns = pattern, mech = "MCAR")
+  # data_miss <- ampute(dev_data_IPD, 
+  #                     prop=0.25,
+  #                     patterns = pattern, 
+  #                     mech = "MCAR")
   # head(data_miss$amp)
   # md.pattern(data_miss$amp)
-  # 
+
   
   # 
   #
   # ## MAR
   #####--------------------------------------------------------------------
-  # mar_weights <- matrix(0, nrow = 4, ncol = 6)
-  # mar_weights[2, 2] <- 0.5  # Pattern 2: V2 → V1
-  # mar_weights[3, 2] <- 0.5  # Pattern 3: V2 → V1 & V3
-  # mar_weights[4, 2] <- 0.5  # Pattern 4: V2 → V3
+  # mar_weights <- matrix(0, nrow = 3, ncol = 6)
+  # mar_weights[1, 2] <- 0.5  # Pattern 2: V2 → V1
+  # mar_weights[2, 2] <- 0.5  # Pattern 3: V2 → V1 & V3
+  # mar_weights[3, 2] <- 0.5  # Pattern 4: V2 → V3
   # 
-  # data_miss <- ampute(dev_data_IPD, patterns = pattern, mech="MAR", weights=mar_weights)
+  # data_miss <- ampute(dev_data_IPD,
+  #                     patterns = pattern,
+  #                     prop=0.25, # 25% of rows will have a MD pattern
+  #                     mech="MAR",
+  #                     weights=mar_weights)
   # head(data_miss$amp)
   # md.pattern(data_miss$amp)
+  # #
   # # 
-  # # 
-  # ## MNAR
-  mnar_weights <- matrix(0, nrow = 4, ncol = 6)
+  # # ## MNAR
+  mnar_weights <- matrix(0, nrow = 3, ncol = 6)
+  mnar_weights[1, 1] <- 0.5  #  V1 → V1 & V3
+  mnar_weights[1, 2] <- 0.5  #  V2 → V1 & V3
+  mnar_weights[1, 6] <- 0.5  #  V6 → V1 & V3
+
   mnar_weights[2, 1] <- 0.5  #  V1 → V1
   mnar_weights[2, 2] <- 0.5  #  V2 → V1
   mnar_weights[2, 6] <- 0.5  #  V6 (U) → V1
 
-  mnar_weights[3, 1] <- 0.5  #  V1 → V1 & V3
-  mnar_weights[3, 2] <- 0.5  #  V2 → V1 & V3
-  mnar_weights[3, 6] <- 0.5  #  V6 → V1 & V3
+  mnar_weights[3, 1] <- 0.5  #  V1 → V3
+  mnar_weights[3, 2] <- 0.5  #  V2 → V3
+  mnar_weights[3, 6] <- 0.5  #  V6 → V3
 
-  mnar_weights[4, 1] <- 0.5  #  V1 → V3
-  mnar_weights[4, 2] <- 0.5  #  V2 → V3
-  mnar_weights[4, 6] <- 0.5  #  V6 → V3
-
-  data_miss <- ampute(dev_data_IPD, patterns = pattern, mech="MNAR", weights=mnar_weights)
+  data_miss <- ampute(dev_data_IPD,
+                      prop=0.25,
+                      patterns = pattern,
+                      mech="MNAR",
+                      weights=mnar_weights)
   head(data_miss$amp)
   md.pattern(data_miss$amp)
-  # 
+
   
   
   #3. Determine the prevalence of the outcome based on the gamma_0
@@ -132,8 +143,9 @@ dev_data_simulation_function <- function(
                                             gamma_x2*x_2 +
                                             gamma_x3*x_3 +
                                             gamma_x4*x_4 +
-                                            gamma_x5*x_5),
-## NOTE: REMOVED GAMMA U
+                                            gamma_x5*x_5 + 
+                                            gamma_U*U),
+
                                   family = binomial(link = "logit"),
                                   data = dev_data_IPD))[1])
   
@@ -371,8 +383,8 @@ for (i in 1:nrow(sims_parameters)) {
   #4. Save
   setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Development Datasets") 
   # Construct the filename with today's date
- # filename <- paste0("DevData_MCAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
- # filename <- paste0("DevData_MAR", "_Yprev_", sims_parameters$Y_prev[i],  ".Rdata")
+# filename <- paste0("DevData_MCAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
+# filename <- paste0("DevData_MAR", "_Yprev_", sims_parameters$Y_prev[i],  ".Rdata")
  filename <- paste0("DevData_MNAR", "_Yprev_", sims_parameters$Y_prev[i], ".Rdata")
   save(development_dataset, file = filename)
 }
