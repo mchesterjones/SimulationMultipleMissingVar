@@ -186,15 +186,17 @@ simulation_function <- function(N_val,
   
   #2. Remove X1 and X3 
   myfreq <- c(R_prev, 0, 0, 0,0,0)
-  pattern <- matrix(c(1, 1, 1, 1, 1, 1,
-                      0, 1, 1, 1, 1, 1, 
+  pattern <- matrix(c(0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
                     nrow = 4, byrow = TRUE)
   
   
   ## MCAR
-  data_miss <- ampute(IPD, patterns = pattern, mech = "MCAR")
+  data_miss <- ampute(IPD, 
+                      prop= R_prev,
+                      patterns = pattern, 
+                      mech = "MCAR")
   head(data_miss$amp)
   md.pattern(data_miss$amp)
 
