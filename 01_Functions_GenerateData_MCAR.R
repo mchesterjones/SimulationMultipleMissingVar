@@ -217,8 +217,8 @@ simulation_function <- function(N_val,
                                          gamma_x2*IPD$x_2 +
                                          gamma_x3*IPD$x_3 +
                                          gamma_x4*IPD$x_4 +
-                                         gamma_x5*IPD$x_5))
- 
+                                         gamma_x5*IPD$x_5 + 
+                                         gamma_U*IPD$U)) 
   
   # 4. Combine with non missing
   colnames(IPD) <- c("x_1true", "x_2", "x_3true", "x_4", "x_5", "U","Y")
