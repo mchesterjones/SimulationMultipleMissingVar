@@ -185,21 +185,25 @@ simulation_function <- function(N_val,
     mutate(x_5 = rbinom(n = N_val, size = 1, prob = plogis(x_5)))
   
   #2. Remove X1 and X3 
-  myfreq <- c(R_prev, 0, 0, 0,0,0)
-  pattern <- matrix(c(1, 1, 1, 1, 1, 1,
-                      0, 1, 1, 1, 1, 1, 
+  pattern <- matrix(c(0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
-                    nrow = 4, byrow = TRUE)
+                    nrow = 3, byrow = TRUE)
   
   
   ## MAR
-  mar_weights <- matrix(0, nrow = 4, ncol = 6)
-  mar_weights[2, 2] <- 0.5  # Pattern 2: V2 → V1
-  mar_weights[3, 2] <- 0.5  # Pattern 3: V2 → V1 & V3
-  mar_weights[4, 2] <- 0.5  # Pattern 4: V2 → V3
+  mar_weights <- matrix(0, nrow = 3, ncol = 6)
+  mar_weights[1, 2] <- 0.5  # Pattern 2: X2 → X1
+  mar_weights[2, 2] <- 0.5  # Pattern 3: X2 → X1 & X3
+  mar_weights[3, 2] <- 0.5  # Pattern 4: X2 → X3
 
-  data_miss <- ampute(IPD, patterns = pattern, mech="MAR", weights=mar_weights)
+  data_miss <- ampute(
+    IPD, 
+    prop = R_prev,  # Proportion of rows missing will be 25%, 50% or 75% 
+    patterns = pattern,
+    mech = "MAR",
+    weights = mar_weights
+  )
   head(data_miss$amp)
   md.pattern(data_miss$amp)
 
@@ -221,7 +225,8 @@ simulation_function <- function(N_val,
                                          gamma_x2*IPD$x_2 +
                                          gamma_x3*IPD$x_3 +
                                          gamma_x4*IPD$x_4 +
-                                         gamma_x5*IPD$x_5))
+                                         gamma_x5*IPD$x_5 + 
+                                         gamma_U*IPD$U))
  
   
   # 4. Combine with non missing
@@ -246,7 +251,10 @@ simulation_function <- function(N_val,
   
   
   print("R Prev")
-  print(prop.table(table(is.na(val_data$x_1))) * 100)
+  print(prop.table(table(!is.na(val_data$x_1) & !is.na(val_data$x_3))) * 100) # pattern 1
+  print(prop.table(table(is.na(val_data$x_1))) * 100) # pattern 2
+  print(prop.table(table(is.na(val_data$x_3) & is.na(val_data$x_1))) * 100) # pattern 3
+  print(prop.table(table(is.na(val_data$x_3))) * 100) # pattern 4
   
 
   

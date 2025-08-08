@@ -64,7 +64,7 @@ clusterExport(cl, c("submodel", "refmodel", "xgboost_model", "model", "rimodel",
 # Simulation Parameters
 ################################################################################
 sims_parameters <- crossing(
-  n_iter = 200,  # Changed to 200 iterations
+  n_iter = 100,  
   N_val = c(10000),
   Y_prev = c(0.1), 
   R_prev = c(0.25, 0.5, 0.75), 
