@@ -186,15 +186,18 @@ simulation_function <- function(N_val,
   
   #2. Remove X1 and X3 
   myfreq <- c(R_prev, 0, 0, 0,0,0)
-  pattern <- matrix(c(1, 1, 1, 1, 1, 1,
-                      0, 1, 1, 1, 1, 1, 
+  pattern <- matrix(c(0,  0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
-                    nrow = 4, byrow = TRUE)
+                    nrow = 3, byrow = TRUE)
   
   
   ## MNAR
-  mnar_weights <- matrix(0, nrow = 4, ncol = 6)
+  mnar_weights <- matrix(0, nrow = 3, ncol = 6)
+  mnar_weights[1, 1] <- 0.5  #  V1 → V3
+  mnar_weights[1, 2] <- 0.5  #  V2 → V3
+  mnar_weights[1, 6] <- 0.5  #  V6 → V3
+  
   mnar_weights[2, 1] <- 0.5  #  V1 → V1
   mnar_weights[2, 2] <- 0.5  #  V2 → V1
   mnar_weights[2, 6] <- 0.5  #  V6 (U) → V1
@@ -203,11 +206,12 @@ simulation_function <- function(N_val,
   mnar_weights[3, 2] <- 0.5  #  V2 → V1 & V3
   mnar_weights[3, 6] <- 0.5  #  V6 → V1 & V3
   
-  mnar_weights[4, 1] <- 0.5  #  V1 → V3
-  mnar_weights[4, 2] <- 0.5  #  V2 → V3
-  mnar_weights[4, 6] <- 0.5  #  V6 → V3
   
-  data_miss <- ampute(IPD, patterns = pattern, mech="MNAR", weights=mnar_weights)
+  data_miss <- ampute(IPD,
+                      patterns = pattern, 
+                      prop=R_prev,
+                      mech="MNAR",
+                      weights=mnar_weights)
   head(data_miss$amp)
   md.pattern(data_miss$amp)
   
