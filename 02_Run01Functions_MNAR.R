@@ -23,7 +23,7 @@ library(xgboost)  # For XGBoost functions
 # Setup parallel processing
 ################################################################################
 # Use 6 cores (leave 1 for system)
-cl <- makeCluster(6)
+cl <- makeCluster(9)
 registerDoParallel(cl)
 
 # Export necessary objects to all cores
@@ -121,7 +121,7 @@ results_list <- foreach(i = 1:nrow(sims_parameters),
 ################################################################################
 # SAVE RESULTS WITH ERROR CHECKING
 ################################################################################
-setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Validation Datasets")
+setwd("C:\\Users\\maecj\\Documents\\Simulation Data Study 3")
 
 # Track successful and failed scenarios
 successful_scenarios <- 0

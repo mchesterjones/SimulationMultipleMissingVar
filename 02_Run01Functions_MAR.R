@@ -65,7 +65,7 @@ clusterExport(cl, c("submodel", "refmodel", "xgboost_model", "model", "rimodel",
 ################################################################################
 sims_parameters <- crossing(
   n_iter = 100,  
-  N_val = c(10000),
+  N_val = c(500),
   Y_prev = c(0.1), 
   R_prev = c(0.25, 0.5, 0.75), 
   gamma_x1 = c(0.5), 
@@ -121,7 +121,7 @@ results_list <- foreach(i = 1:nrow(sims_parameters),
 ################################################################################
 # SAVE RESULTS WITH ERROR CHECKING
 ################################################################################
-setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Validation Datasets")
+setwd("C:\\Users\\maecj\\Documents\\Simulation Data Study 3")
 
 # Track successful and failed scenarios
 successful_scenarios <- 0
