@@ -129,9 +129,7 @@ simulation_singlerun_fnc <- function(Y_prev,
   #3. Compare Performance 
   target_measures <- predictive.performance.function(predictions=predictions)
   
-  return(list("Parameters" = parameters,
-              "model"=model,
-              "val_data" = val_data,
+  return(list(#"val_data" = val_data,
               "predictions" = predictions,
               "target_measures" = target_measures))
   
@@ -189,7 +187,7 @@ simulation_function <- function(N_val,
   pattern <- matrix(c(0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
-                    nrow = 4, byrow = TRUE)
+                    nrow = 3, byrow = TRUE)
   
   
   ## MCAR
@@ -238,13 +236,13 @@ simulation_function <- function(N_val,
                                        !is.na(x_1) & is.na(x_3) ~ 3))
   
   ## Print output
-  print("Y Prev")
-  print(table(val_data$Y))
-  print(prop.table(table(val_data$Y)) * 100)
-  
-  
-  print("R Prev")
-  print(prop.table(table(is.na(val_data$x_1))) * 100)
+  # print("Y Prev")
+  # print(table(val_data$Y))
+  # print(prop.table(table(val_data$Y)) * 100)
+  # 
+  # 
+ # print("R Prev")
+ # print(prop.table(table(is.na(val_data$x_1))) * 100)
   
 
   

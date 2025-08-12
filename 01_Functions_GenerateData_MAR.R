@@ -129,10 +129,7 @@ simulation_singlerun_fnc <- function(Y_prev,
   #3. Compare Performance 
   target_measures <- predictive.performance.function(predictions=predictions)
   
-  return(list("Parameters" = parameters,
-              "model"=model,
-              "val_data" = val_data,
-              "predictions" = predictions,
+  return(list("predictions" = predictions,
               "target_measures" = target_measures))
   
   
@@ -291,9 +288,11 @@ prediction_function <- function(val_data, submodel, refmodel, xgboost_model, mod
   
   predictions_ref <- predict(refmodel[["model_ref"]], newdata=val_data, type = 'response')
   
-  
-  
-  
+#   ref_estimated_x1 <- val_data$x_1
+# #    val_data %>% filter(pattern==1 | pattern ==2) %>% select(x_1)
+#   ref_estimated_x3 <- val_data$x_3
+#   #  val_data %>% filter(pattern ==2 | pattern ==3) %>% select(x_3)
+#   
   
   # Submodel Predictions
   #------------------------------------------------------
@@ -364,7 +363,8 @@ prediction_function <- function(val_data, submodel, refmodel, xgboost_model, mod
   
   
   
-  # Output  
+  # Output - Predictions of Y 
+  #----------------------------------------
   
   output_predictions <- data.frame("Y" = val_data$Y) #defining the Y as the Y column from the imputed datasets
   
@@ -375,6 +375,10 @@ prediction_function <- function(val_data, submodel, refmodel, xgboost_model, mod
   names(final_predictions)[4] <- "Prediction_SubModel"
   names(final_predictions)[5] <- "Prediction_XG"
   names(final_predictions)[6] <- "Prediction_RI"
+  
+
+  # Return
+#-----------------------------------------   
   
   return(predictions=final_predictions)
 }

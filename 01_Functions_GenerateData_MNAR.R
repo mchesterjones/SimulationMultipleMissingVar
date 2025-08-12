@@ -44,7 +44,7 @@ simulation_nrun_fnc <- function(n_iter,
   for (iter in 1:n_iter) {
     
     ## Set unique seed per iteration
-    set.seed(918273 + iter)
+    set.seed(938571 + iter)
     
     iter_current <- simulation_singlerun_fnc(
       N_val = N_val,
@@ -185,8 +185,7 @@ simulation_function <- function(N_val,
     mutate(x_5 = rbinom(n = N_val, size = 1, prob = plogis(x_5)))
   
   #2. Remove X1 and X3 
-  myfreq <- c(R_prev, 0, 0, 0,0,0)
-  pattern <- matrix(c(0,  0, 1, 1, 1, 1, 1, 
+  pattern <- matrix(c(0, 1, 1, 1, 1, 1, 
                       0, 1, 0, 1, 1, 1,
                       1, 1, 0, 1, 1, 1), 
                     nrow = 3, byrow = TRUE)
@@ -253,14 +252,14 @@ simulation_function <- function(N_val,
                                        is.na(x_1) & is.na(x_3)  ~ 2,
                                        !is.na(x_1) & is.na(x_3) ~ 3))
   
-  ## Print output
-  print("Y Prev")
-  print(table(val_data$Y))
-  print(prop.table(table(val_data$Y)) * 100)
-  
-  
-  print("R Prev")
-  print(prop.table(table(is.na(val_data$x_1))) * 100)
+  # ## Print output
+  # print("Y Prev")
+  # print(table(val_data$Y))
+  # print(prop.table(table(val_data$Y)) * 100)
+  # 
+  # 
+  # print("R Prev")
+  # print(prop.table(table(is.na(val_data$x_1))) * 100)
   
 
   
