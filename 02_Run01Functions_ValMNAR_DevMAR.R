@@ -1,5 +1,5 @@
 ################################################################################
-# 02_Run01Functions_MCAR.R
+# 02_Run01Functions_MNAR.R
 ################################################################################
 # Created: Modified for parallel processing
 # Aim: Run functions from 01 with parallel processing
@@ -41,7 +41,7 @@ clusterEvalQ(cl, {
 # Load development datasets
 ################################################################################
 setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Development Datasets")
-## Load MAR as we are cross testing MAR with MCAR
+
 load("DevData_MAR_Yprev_0.1.Rdata")
 submodel <- development_dataset[["submodel"]]
 refmodel <- development_dataset[["refmodel"]]
@@ -52,7 +52,7 @@ rimodel <- development_dataset[["rimodel"]]
 ################################################################################
 # Load and export the simulation functions
 ################################################################################
-source("C://Users//maecj//OneDrive - Nexus365//A DPhil//Simulation studies//Programs//Study 3//01_Functions_GenerateData_MCAR.R")
+source("C://Users//maecj//OneDrive - Nexus365//A DPhil//Simulation studies//Programs//Study 3//01_Functions_GenerateData_MNAR.R")
 
 # Export ALL necessary functions and objects to clusters
 clusterExport(cl, c("submodel", "refmodel", "xgboost_model", "model", "rimodel",
@@ -64,8 +64,9 @@ clusterExport(cl, c("submodel", "refmodel", "xgboost_model", "model", "rimodel",
 # Simulation Parameters
 ################################################################################
 sims_parameters <- crossing(
-  n_iter = 100, 
-  N_val = c(500, 10000,100000),
+  n_iter = 100,  # Changed to 200 iterations
+  #N_val = c(10000,100000),
+  N_val = 500,
   Y_prev = c(0.1), 
   R_prev = c(0.25, 0.5, 0.75), 
   gamma_x1 = c(0.5), 
@@ -87,8 +88,12 @@ results_list <- foreach(i = 1:nrow(sims_parameters),
                           # Extract parameters
                           params <- sims_parameters[i, ]
                           
+                          # Extract parameters
+                          params <- sims_parameters[i, ]
+                          
                           # SET UNIQUE SEED FOR THIS SCENARIO
-                          set.seed(916923 + i * 10000)  # Multiply by large number to avoid overlap
+                          set.seed(982635 + i * 10000)  # Multiply by large number to avoid overlap
+                          
                           
                           
                           # Add error handling
@@ -145,7 +150,7 @@ for(j in 1:length(results_list)) {
   params <- result$parameters
   simulation_results <- result$results
   
-  filename <- paste0("ValData_MCARvMAR_Nval_", params$N_val, 
+  filename <- paste0("ValData_MNARvMAR_Nval_", params$N_val, 
                      "_Yprev_", params$Y_prev, "_Rprev_", params$R_prev, ".Rdata")
   
   tryCatch({

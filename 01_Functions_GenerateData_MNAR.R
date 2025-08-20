@@ -43,8 +43,6 @@ simulation_nrun_fnc <- function(n_iter,
   ## Repeat through number of iterations
   for (iter in 1:n_iter) {
     
-    ## Set unique seed per iteration
-    set.seed(938571 + iter)
     
     iter_current <- simulation_singlerun_fnc(
       N_val = N_val,
