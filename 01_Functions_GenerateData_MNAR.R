@@ -191,17 +191,20 @@ simulation_function <- function(N_val,
   
   ## MNAR
   mnar_weights <- matrix(0, nrow = 3, ncol = 6)
-  mnar_weights[1, 1] <- 0.5  #  V1 → V3
-  mnar_weights[1, 2] <- 0.5  #  V2 → V3
-  mnar_weights[1, 6] <- 0.5  #  V6 → V3
+  mnar_weights[1, 1] <- 0.5  #  X1 → X1
+  mnar_weights[1, 2] <- 0.5  #  X2 → X1
+  mnar_weights[1, 6] <- 0.5  #  X6 → X1
   
-  mnar_weights[2, 1] <- 0.5  #  V1 → V1
-  mnar_weights[2, 2] <- 0.5  #  V2 → V1
-  mnar_weights[2, 6] <- 0.5  #  V6 (U) → V1
+  mnar_weights[2, 1] <- 0.5  #  x1 → X1X3
+  mnar_weights[2, 2] <- 0.5  #  X → X1X3
+  mnar_weights[2, 6] <- 0.5  #  (U) → X1X3
+  mnar_weights[2, 3] <- 0.5  #  3 → X1X3
   
-  mnar_weights[3, 1] <- 0.5  #  V1 → V1 & V3
-  mnar_weights[3, 2] <- 0.5  #  V2 → V1 & V3
-  mnar_weights[3, 6] <- 0.5  #  V6 → V1 & V3
+  
+  mnar_weights[3, 3] <- 0.5  #  X3 → X3
+  mnar_weights[3, 2] <- 0.5  #  X2 → X3
+  mnar_weights[3, 6] <- 0.5  #  U → X3
+  
   
   
   data_miss <- ampute(IPD,
