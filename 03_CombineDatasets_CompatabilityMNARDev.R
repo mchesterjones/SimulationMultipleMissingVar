@@ -8,7 +8,7 @@ setwd("C:\\Users\\maecj\\Documents\\Simulation Data Study 3")
 
 datasets <- list()
 # Define parameter combinations
-mechanisms <- c("MCARvMAR", "MNARvMAR")
+mechanisms <- c("MCARvMNAR", "MARvMNAR")
 samplesizes <- c("500","10000", "1e+05")
 missing <-c("0.25","0.5","0.75")
 # Load and store in list
@@ -23,8 +23,8 @@ for (mech in mechanisms) {
   }
 }
 
-## Define the number of iterations NOTE MANUAL
-num_iterations <- 100
+## Define the number of iterations  MANUAL ACTION
+num_iterations <- 200
 methods <- c("Prediction_SubModel", "Prediction_Ref", "Prediction_XG", "Predictions_CRI", "Prediction_RI")
 
 
@@ -124,8 +124,8 @@ compatability_df <- compatability_df %>%
       grepl("10000", dataset) ~ "N=10,000",
       grepl("1e", dataset) ~ "N=100,000")),
     Mechanism = factor(case_when(
-      grepl("MCARvM", dataset) ~ "MCAR",
-      grepl("MNAR", dataset) ~ "MNAR")))
+      grepl("MARvM", dataset) ~ "MAR",
+      grepl("MCAR", dataset) ~ "MCAR")))
 
 
 
@@ -174,19 +174,15 @@ compatability_df_long
 setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Validation Datasets")
 load("LongFormat.Rdata")
 load("AllIter.Rdata")
-mar_long <- summarised_df_long %>% filter(Mechanism == "MAR")
-mar_df <- combined_df %>% filter(Mechanism == "MAR")
+mnar_long <- summarised_df_long %>% filter(Mechanism == "MNAR")
+mnar_df <- combined_df %>% filter(Mechanism == "MNAR")
 
 
 # Join with compatablity
-compatability_df <- rbind(compatability_df, mar_df)
-compatability_df_long <- rbind(compatability_df_long, mar_long)
+compatability_df_MNAR <- rbind(compatability_df, mnar_df)
+compatability_df_long_MNAR <- rbind(compatability_df_long, mnar_long)
 
 
-## Update Mechanisms
-
-save(compatability_df_long,file= "CompatabilityofMechanisms_LongFormat.Rdata")
-save(compatability_df,file= "ComtabilityofMechanisms_AllIterations.Rdata")
-
-
-
+## Store
+save(compatability_df_long_MNAR,file= "CompatabilityofMechanisms_MNARDev_LongFormat.Rdata")
+save(compatability_df_MNAR,file= "ComtabilityofMechanisms_MNARDev_AllIterations.Rdata")

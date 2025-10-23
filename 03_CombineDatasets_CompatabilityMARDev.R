@@ -8,10 +8,9 @@ setwd("C:\\Users\\maecj\\Documents\\Simulation Data Study 3")
 
 datasets <- list()
 # Define parameter combinations
-mechanisms <- c("MCAR", "MAR", "MNAR")
+mechanisms <- c("MCARvMAR", "MNARvMAR")
 samplesizes <- c("500","10000", "1e+05")
 missing <-c("0.25","0.5","0.75")
-
 # Load and store in list
 for (mech in mechanisms) {
   for (ss in samplesizes) {
@@ -25,16 +24,8 @@ for (mech in mechanisms) {
 }
 
 ## Define the number of iterations NOTE MANUAL
-num_iterations <- 200
+num_iterations <- 100
 methods <- c("Prediction_SubModel", "Prediction_Ref", "Prediction_XG", "Predictions_CRI", "Prediction_RI")
-
-
-
-
-################################################################################
-## For each Dataset compare X1 and X3
-################################################################################
-
 
 
 
@@ -114,10 +105,10 @@ bias_summary_df <- do.call(rbind, bias_summaries)
 
 
 ### JOIN BIAS AND TARGET
-combined_df <- full_join(target_measures_df, bias_summary_df, by = c("iteration" = "iteration", 
+compatability_df <- full_join(target_measures_df, bias_summary_df, by = c("iteration" = "iteration", 
                                                                      "Model" = "method",
                                                                      "dataset"="dataset"))
-combined_df <- combined_df %>%
+compatability_df <- compatability_df %>%
   mutate(Method = factor(case_when(
     Model == "Prediction_RI" ~"Regression Imputation",
     Model == "Prediction_SubModel" ~"Sub Model", 
@@ -133,8 +124,7 @@ combined_df <- combined_df %>%
       grepl("10000", dataset) ~ "N=10,000",
       grepl("1e", dataset) ~ "N=100,000")),
     Mechanism = factor(case_when(
-      grepl("MCAR", dataset) ~ "MCAR",
-      grepl("MAR", dataset) ~ "MAR",
+      grepl("MCARvM", dataset) ~ "MCAR",
       grepl("MNAR", dataset) ~ "MNAR")))
 
 
@@ -145,7 +135,7 @@ combined_df <- combined_df %>%
 ###############################################################################
 
 # Function to summarize the data
-summarised_df <-   combined_df %>%
+summarised_df <-   compatability_df %>%
   group_by(Model, Missingness, samplesize, Mechanism) %>%
   summarise(across(c(Cal_Int, Cal_Slope, AUC, Brier, Brier_scaled, bias, mse, rmse), 
                    list(AVG = ~ mean(.x, na.rm = TRUE),  
@@ -154,14 +144,14 @@ summarised_df <-   combined_df %>%
                         NACount = ~ sum(is.na(.x)))))
 
 # Convert to long format
-summarised_df_long <- summarised_df %>%
+compatability_df_long <- summarised_df %>%
   pivot_longer(cols = ends_with(c("AVG", "LCI", "UCI", "NACount")),
                names_to = c("Measure", ".value"), 
                names_pattern = "^(.*)_(AVG|LCI|UCI|NACount)$")
 
 
 ## Create variables as factors
-summarised_df_long <- summarised_df_long %>%
+compatability_df_long <- compatability_df_long %>%
   mutate(Method = factor(case_when(
     Model == "Prediction_RI" ~"Regression Imputation",
     Model == "Prediction_SubModel" ~"Sub Model", 
@@ -169,12 +159,146 @@ summarised_df_long <- summarised_df_long %>%
     Model == "Prediction_XG" ~ "XGBoost",
     Model == "Predictions_CRI" ~"Completely Recorded Information")))
 
-summarised_df_long <- summarised_df_long %>% 
+compatability_df_long <- compatability_df_long %>% 
   mutate(Measure =factor(Measure,
                          levels = c("AUC", "Brier_scaled", "Brier",
                                     "bias", "mse",
                                     "Cal_Int", "Cal_Slope", "rmse")))
 
+compatability_df_long
+
+
+
+## Load previous files and extract MAR v MAR
+#-----------------------------------------------------
 setwd("C:\\Users\\maecj\\OneDrive - Nexus365\\A DPhil\\Simulation studies\\Programs\\Study 3\\Validation Datasets")
-save(summarised_df_long,file= "LongFormat.Rdata")
-save(combined_df,file= "AllIter.Rdata")
+load("LongFormat.Rdata")
+load("AllIter.Rdata")
+mar_long <- summarised_df_long %>% filter(Mechanism == "MAR")
+mar_df <- combined_df %>% filter(Mechanism == "MAR")
+
+
+# Join with compatablity
+compatability_df <- rbind(compatability_df, mar_df)
+compatability_df_long <- rbind(compatability_df_long, mar_long)
+
+
+## Store
+save(compatability_df_long,file= "CompatabilityofMechanisms_LongFormat.Rdata")
+save(compatability_df,file= "ComtabilityofMechanisms_AllIterations.Rdata")
+
+
+
+## Calculate difference from MAR
+load("CompatabilityofMechanisms_LongFormat.Rdata")
+load("LongFormat.Rdata")
+
+library(dplyr)
+
+# Calculate bias relative to MAR
+bias_df <- compatability_df_long %>%
+  # First get the MAR reference values
+  select(Model, Missingness, samplesize, Method, Mechanism, Measure, AVG, LCI, UCI) %>%
+  # Create MAR reference dataset
+  filter(Mechanism == "MAR") %>%
+  rename(MAR_AVG = AVG, MAR_LCI = LCI, MAR_UCI = UCI) %>%
+  select(-Mechanism) %>%
+  # Join back to original data
+  left_join(
+    compatability_df_long %>%
+      select(Model, Missingness, samplesize, Method, Mechanism, Measure, AVG, LCI, UCI),
+    by = c("Model", "Missingness", "samplesize", "Method", "Measure")
+  ) %>%
+  # Calculate bias (difference from MAR)
+  mutate(
+    Bias_AVG = AVG - MAR_AVG,
+    Bias_LCI = LCI - MAR_LCI,
+    Bias_UCI = UCI - MAR_UCI
+  ) %>%
+  # Keep only MNAR and MCAR (excluding MAR since bias would be 0)
+  filter(Mechanism %in% c("MNAR", "MCAR"))
+
+# View the results
+head(bias_df)
+
+
+## Plot 
+library(dplyr)
+library(ggplot2)
+library(ggh4x)  # for enhanced faceting
+
+
+# Filter for N=100,000 sample size
+bias_plot_N100k <- bias_df %>%
+  filter(samplesize == "N=100,000") 
+
+# Create the plot
+bias_plot <- ggplot(bias_plot_N100k, aes(x = Bias_AVG, y = Method, color = Mechanism, shape = Mechanism)) +
+  geom_point(size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  facet_grid(Missingness ~ Measure, scales = "free_x") +
+  scale_color_manual(values = c("MCAR" = "red", "MNAR" = "blue")) +
+  scale_shape_manual(values = c("MCAR" = 16, "MNAR" = 17)) +
+  labs(
+    x = "Bias (relative to MAR)",
+    y = "Validation Data Imputation Method",
+    title = "Bias Relative to MAR Performance (N=100,000)",
+    color = "Missing Data Mechanism",
+    shape = "Missing Data Mechanism"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "gray90"),
+    panel.spacing = unit(0.5, "lines"),
+    strip.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(size = 14, hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)
+  )
+
+# Display the plot
+print(bias_plot)
+
+
+
+
+
+
+
+
+
+
+
+# Filter for N=100,000 sample size
+bias_plot_mcar <- bias_df %>%
+  filter(Mechanism == "MCAR") 
+
+# Create the plot
+bias_plot2 <- ggplot(bias_plot_mcar, aes(x = Bias_AVG, y = Measure, color = Method, shape = Method)) +
+  geom_point(size = 2) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  facet_grid(Missingness ~ samplesize, scales = "free_x") +
+  labs(
+    x = "Bias (relative to MAR)",
+    y = "Validation Data Imputation Method",
+    title = "Bias Relative to MAR Performance (N=100,000)",
+    color = "Missing Data Mechanism",
+    shape = "Missing Data Mechanism"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    panel.background = element_rect(fill = "gray90"),
+    panel.spacing = unit(0.5, "lines"),
+    strip.text = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(size = 14, hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)
+  )
+
+# Display the plot
+print(bias_plot2)
+
