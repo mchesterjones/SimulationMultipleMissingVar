@@ -70,12 +70,14 @@ bias_comp <- ggplot(df_long %>% filter(Measure == "bias" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
   )
-
 bias_comp
+
+
 ## Discrimination 
 ##----------------------
 auc_comp <- ggplot(df_long %>% filter(Measure == "AUC" & 
@@ -101,6 +103,7 @@ auc_comp <- ggplot(df_long %>% filter(Measure == "AUC" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
@@ -135,6 +138,8 @@ calint_comp <- ggplot(df_long %>% filter(Measure == "Cal_Int" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
+  
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
@@ -168,6 +173,8 @@ calslope_comp <- ggplot(df_long %>% filter(Measure == "Cal_Slope" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
+  
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
@@ -199,6 +206,8 @@ rmse_comp <- ggplot(df_long %>% filter(Measure == "rmse" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
+  
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
@@ -230,6 +239,7 @@ brisc_comp <- ggplot(df_long %>% filter(Measure == "Brier_scaled" &
         axis.text.y = element_text(size = 12, angle = 0, hjust = 0.5),
         axis.ticks.y = element_blank()) +
   scale_shape_manual(values = c("MAR" = 17, "MCAR" = 16, "MNAR" = 15)) +
+  scale_color_manual(values = c("MCAR" = "#F8766D", "MNAR" = "#00BA38", "MAR" = "#619CFF")) +
   guides(
     colour = guide_legend("Mechanism"),
     shape  = guide_legend("Mechanism")
