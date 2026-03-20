@@ -34,12 +34,23 @@ load(paste0(val_data,"ComtabilityofMechanisms_MNARDev_AllIterations.Rdata"))
 
 
 df_long <- compatability_df_long_MNAR %>%
-              mutate(method_graph = case_when(Method == "Completely Recorded Information" ~ "Fully observed", 
-                                              Method == "XGBoost" ~ "XGBoost", 
-                                              Method == "Sub Model" ~ "Pattern sub-model", 
-                                              Method == "Reference Values"~ "Reference values", 
-                                              Method == "Regression Imputation" ~ "Regression Imputation"))
+  mutate(method_graph = case_when(
+    Method == "Completely Recorded Information" ~ "Fully observed", 
+    Method == "Regression Imputation" ~ "Regression Imputation",
+    Method == "Reference Values" ~ "Reference values", 
+    Method == "Sub Model" ~ "Pattern sub-model", 
+    Method == "XGBoost" ~ "XGBoost"
+  )) %>%
+  mutate(method_graph = factor(method_graph, 
+                               levels = c("XGBoost",
+                                          "Pattern sub-model",
+                                          "Reference values", 
+                                          "Regression Imputation", 
+                                          "Fully observed")
+                                           
+                                          ))
 df_long <- df_long %>% mutate(method_graph= as.factor(method_graph))
+
 
 ################################################################################
 ## otputs 
@@ -122,7 +133,7 @@ calint_comp <- ggplot(df_long %>% filter(Measure == "Cal_Int" &
        y = "Proportion of Rows Missing",
        colour = "Method\n(Mean, 95% CI)") +
   theme_minimal() +
-  scale_x_continuous(limits=c(-0.25, 0.1), breaks=seq(-1, 1, by=0.05)) +
+  scale_x_continuous(limits=c(-0.25, 0.1), breaks=seq(-1, 1, by=0.1)) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", colour = "grey30") +
   facet_grid(Missingness ~ . ,
              scales = "fixed",
@@ -157,7 +168,7 @@ calslope_comp <- ggplot(df_long %>% filter(Measure == "Cal_Slope" &
   labs(x = "Calibration Slope",
        y = "Proportion of Rows Missing") +
   theme_minimal() +
-  scale_x_continuous(limits=c(0.95, 1.05), breaks=seq(-1, 2, by=0.025)) +
+  scale_x_continuous(limits=c(0.95, 1.05), breaks=seq(-1, 2, by=0.02)) +
   geom_vline(aes(xintercept = 1), linetype = "dashed", colour = "grey30") +
   facet_grid(Missingness ~ . ,
              scales = "fixed",
@@ -246,7 +257,7 @@ brisc_comp <- ggplot(df_long %>% filter(Measure == "Brier_scaled" &
   )
 brisc_comp
 ################################################################################
-## Patchwork
+## Patchwork (all)
 ################################################################################
 # Top row - keep y-axis only on auc_comp, remove from others
 auc_comp <- auc_comp + theme(legend.position = "none")  # Keep y-axis as is
@@ -318,4 +329,111 @@ ggsave(
 
 
 
+################################################################################
+## Patchwork (top 4)
+################################################################################
 
+
+# Create patchwork
+patchwork_top4 <- (auc_comp / brisc_comp | calslope_comp /calint_comp)  +
+  plot_layout(
+    guides = "collect", 
+    widths = c(2.5, 2, 2)
+  ) +
+  plot_annotation(
+    title = "MCAR, MAR, MNAR at validation vs. MNAR at development",
+    theme = theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.key.width = unit(2, "cm"),
+      legend.key.height = unit(0.8, "cm"),
+      plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
+    )
+  )
+
+patchwork_top4
+
+
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MNAR Development Top 4 GRID.pdf"),
+  plot = patchwork_top4,
+  width = 14, height = 10
+)
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MNAR Development Top 4 GRID.svg"),
+  plot = patchwork_top4,
+  width = 14, height = 10
+)
+
+
+################################################################################
+## Patchwork (top 4 ROW)
+################################################################################
+# Correcting auc_comp (Apply this logic to all four)
+auc_comp <- auc_comp + 
+  labs(x = "A Discrimination")  +
+  theme(  legend.position = "bottom",        # Keep legend for collection
+          legend.direction = "horizontal",
+          legend.box = "horizontal"
+  )
+# Correcting brisc_comp
+brisc_comp <- brisc_comp + 
+  labs(x = "B Scaled Brier Score") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Correcting calint_comp
+calint_comp <- calint_comp + labs(x = "D Calibration-in-the-large") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Correcting calslope_comp
+calslope_comp <- calslope_comp + labs(x = "C Calibration Slope") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Top row - keep y-axis only on auc_comp, remove from other
+patchwork_top4_row <- (auc_comp + brisc_comp + calslope_comp + calint_comp)  +
+  plot_layout(
+    guides = "collect", 
+    widths = c(2, 2, 2,2)
+  ) +
+  plot_annotation(
+    title = "MCAR, MAR, MNAR at validation vs. MNAR at development",
+    theme = theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.key.width = unit(2, "cm"),
+      legend.key.height = unit(0.8, "cm"),
+      plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
+    )
+  ) & 
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE)) # This forces 1 row
+
+patchwork_top4_row
+
+
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MNAR Development Top 4 Row.pdf"),
+  plot = patchwork_top4_row,
+  width = 14, height = 10
+)
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MNAR Development Top 4 Row.svg"),
+  plot = patchwork_top4_row,
+  width = 14, height = 10
+)

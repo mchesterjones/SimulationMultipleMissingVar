@@ -151,7 +151,7 @@ calslope_comp <- ggplot(df_long %>% filter(Measure == "Cal_Slope" &
   labs(x = "Calibration Slope",
        y = "Proportion of Rows Missing") +
   theme_minimal() +
-  scale_x_continuous(limits=c(0.95, 1.025), breaks=seq(-1, 2, by=0.025)) +
+  scale_x_continuous(limits=c(0.96, 1.02), breaks=seq(-1, 2, by=0.02)) +
   geom_vline(aes(xintercept = 1), linetype = "dashed", colour = "grey30") +
   facet_grid(Missingness ~ . ,
              scales = "fixed",
@@ -301,5 +301,75 @@ ggsave(
 )
 
 
+################################################################################
+## Patchwork (top 4 ROW)
+################################################################################
+# Correcting auc_comp (Apply this logic to all four)
+auc_comp <- auc_comp + 
+  labs(x = "A Discrimination")  +
+  theme(  legend.position = "bottom",        # Keep legend for collection
+          legend.direction = "horizontal",
+          legend.box = "horizontal"
+  )
+# Correcting brisc_comp
+brisc_comp <- brisc_comp + 
+  labs(x = "B Scaled Brier Score") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Correcting calint_comp
+calint_comp <- calint_comp + labs(x = "D Calibration-in-the-large") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Correcting calslope_comp
+calslope_comp <- calslope_comp + labs(x = "C Calibration Slope") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    strip.text.y = element_blank()
+  )
+
+# Top row - keep y-axis only on auc_comp, remove from other
+patchwork_top4_row <- (auc_comp + brisc_comp + calslope_comp + calint_comp)  +
+  plot_layout(
+    guides = "collect", 
+    widths = c(2, 2, 2,2)
+  ) +
+  plot_annotation(
+    title = "MCAR, MAR, MNAR at validation vs. MAR at development",
+    theme = theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.key.width = unit(2, "cm"),
+      legend.key.height = unit(0.8, "cm"),
+      plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
+    )
+  ) & 
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE)) # This forces 1 row
+
+patchwork_top4_row
+
+
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MAR Development Top 4 Row.pdf"),
+  plot = patchwork_top4_row,
+  width = 14, height = 10
+)
+ggsave(
+  filename = paste0(figures, "Compatability of Mechanisms MAR Development Top 4 Row.svg"),
+  plot = patchwork_top4_row,
+  width = 14, height = 10
+)
 
 
